@@ -26,7 +26,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "freetype-py", "pillow"
+    "freetype-py", "simplification", "pillow"
 ]
 
 [tool.setuptools.packages.find]
