@@ -9,7 +9,7 @@ Historically when drawing text microcontrollers have been limited to bitmapped f
 
 More recently the power and capacity of cheap, embeddable, microcontrollers has increased to the point where for a dollar and change you can be running at hundreds of megahertz with megabytes of flash storage alongside.
 
-It is now viable to render filled, transformed, anti-aliased, and scalable characters that are comparable in quality to the text that we see on our computer screens every day. 
+It is now viable to render filled, transformed, anti-aliased, and scalable characters that are comparable in quality to the text that we see on our computer screens every day.
 
 There is, however, still a sticking point. Existing font formats are complicated beasts that define shapes as collections of curves and control points, include entire state machines for pixel hinting, have character pair specific kerning tables, and digital rights management for.. well, yeah.
 
@@ -37,7 +37,7 @@ Features:
 
 Alright Fonts includes:
 
-- `afinate` an extraction and encoding tool to create Alright Font (.af) files 
+- `afinate` an extraction and encoding tool to create Alright Font (.af) files
 - `python_alright_fonts` a Python library for encoding and loading Alright Fonts
 - `alright-fonts.hpp` a reference C++ library implementation
 
@@ -65,13 +65,13 @@ Font data can be output either as a binary file or as source files for C(++) and
   - `c` generates a C(++) code file containing a const array of font data
   - `python` generates a Python code file containing an array of font data
 - `--quality`: the quality of decomposed bezier curves, either `low`, `medium`, or `high` (default: `medium` - affects file size)
-  
+
 The list of characters to include can be specified in three ways:
 
   - default: full printable ASCII set (95 characters)
   - `--characters CHARACTERS`: a list of characters to include in the font pack
   - `--corpus FILE`: a text file containing all of the characters to include
-  
+
 For example:
 
 ```bash
@@ -118,11 +118,11 @@ This scale was chosen for a number of reasons:
 
 Let's hedge our bets.
 
-Being an English software developer ~~it's possible~~ an absolute certainty that I don't fully understand every nuance of every language used globally - heck, I can just barely handle my own. 
+Being an English software developer ~~it's possible~~ an absolute certainty that I don't fully understand every nuance of every language used globally - heck, I can just barely handle my own.
 
 It's also likely that we may want, in future, to add a feature or two:
 
-- excluding glyph bounding boxes 
+- excluding glyph bounding boxes
 - including glyph pair kerning data
 - allowing 4-byte character codepoints
 - allow a finer scale for coordinates (i.e. `-65536..65535`)
@@ -192,10 +192,12 @@ Here three Alright Fonts files have been generated containing the full set of pr
 
 The differences are easier to see when viewing the images at their original size - click to open in a new tab.
 
-### Python `render-demo`
+### Python `swatch`
 
-You can pipe the output of `afinate` directly into the `render-demo` example script to product a swatch image.
+To run the Python examples, install the alright fonts Python package into your virtual environment with `pip install` (either `pip install .` for a static installation, or `pip install -e .` for a development version).
+
+You can pipe the output of `afinate` directly into the `swatch` example script to product a swatch image.
 
 ```bash
-./afinate --font fonts/Roboto-Black.ttf --quality high - | ./render-demo
+./afinate --font fonts/Roboto-Black.ttf --quality high - | examples/python/swatch
 ```
