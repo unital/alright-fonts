@@ -9,157 +9,160 @@
 import sys, argparse, struct, math, builtins
 from python_alright_fonts import Glyph, Point, Encoder
 
+def main():
+  # parse command line arguments
+  # ===========================================================================
 
-# parse command line arguments
-# ===========================================================================
+  parser = argparse.ArgumentParser(description="Create an Alright Font (.af) file containing the specified set of glyphs.")
+  parser.add_argument("--font", type=argparse.FileType("rb"), required=True, help="the font (.ttf or .otf) that you want to extract glyphs from")
+  parser.add_argument("--format", type=str, default="af", choices=["af", "c", "python"], help="the output format (either 'af', 'c', or 'python'")
+  parser.add_argument("--quality", type=str, choices=["low", "medium", "high"], default="medium", help="the quality of decomposed bezier curves - affects font file size. (default: \"medium\")")
+  parser.add_argument("--characters", type=str, help="the list of characters that you want to extract. (default: ASCII character set)")
+  parser.add_argument("--corpus", type=argparse.FileType("r"), help="corpus to select characters from")
+  parser.add_argument("--quiet", action="store_true", help="suppress all progress and debug messages")
+  parser.add_argument("out", type=str, help="the output filename")
+  args = parser.parse_args()
 
-parser = argparse.ArgumentParser(description="Create an Alright Font (.af) file containing the specified set of glyphs.")
-parser.add_argument("--font", type=argparse.FileType("rb"), required=True, help="the font (.ttf or .otf) that you want to extract glyphs from")
-parser.add_argument("--format", type=str, default="af", choices=["af", "c", "python"], help="the output format (either 'af', 'c', or 'python'")
-parser.add_argument("--quality", type=str, choices=["low", "medium", "high"], default="medium", help="the quality of decomposed bezier curves - affects font file size. (default: \"medium\")")
-parser.add_argument("--characters", type=str, help="the list of characters that you want to extract. (default: ASCII character set)")
-parser.add_argument("--corpus", type=argparse.FileType("r"), help="corpus to select characters from")
-parser.add_argument("--quiet", action="store_true", help="suppress all progress and debug messages")
-parser.add_argument("out", type=str, help="the output filename")
-args = parser.parse_args()
-
-# override print() to allow quiet mode to suppress output
-def print(*a, **kw):
-  if not args.quiet:
-    builtins.print(*a, **kw)
-
-
-# load the requested font file
-# ===========================================================================
-
-print("> loading font", args.font.name)
-quality_map = {
-  "low": 25,
-  "medium": 5,
-  "high": 1
-}
-
-try:
-  encoder = Encoder(args.font, quality=quality_map[args.quality])
-except:
-  print("Failed to load font - stopping.")
-  sys.exit(1)
+  # override print() to allow quiet mode to suppress output
+  def print(*a, **kw):
+    if not args.quiet:
+      builtins.print(*a, **kw)
 
 
+  # load the requested font file
+  # ===========================================================================
 
-# determine glyph metric and coordinate scaling
-# ===========================================================================
+  print("> loading font", args.font.name)
+  quality_map = {
+    "low": 25,
+    "medium": 5,
+    "high": 1
+  }
 
-# the bounding box defines the largest bounding box of all glyphs
-print("  - bounding box {}, {} -> {}, {}".format(
-  encoder.bbox_l, encoder.bbox_t, encoder.bbox_r, encoder.bbox_b))
-
-# then upscale from the normalised scale to our preferred scale
-print("  - scale factor {}".format(round(encoder.scale_factor, 3)))
-
-
-# get the list of character code points or ascii character codes
-# ===========================================================================
-
-# default to the standard ascii character set
-if not args.characters and not args.corpus:
-  character_codepoints = [i for i in range(0, 128)]
-
-# user supplied list of characters as command line argument
-if args.characters:
-  character_codepoints = sorted([ord(c) for c in set(args.characters)])
-
-# user supplied corpus file to extract characters from
-if args.corpus:
-  while True:
-    line = args.corpus.readline()
-    if not line:
-      break
-    character_codepoints = sorted(set(character_codepoints + [ord(c) for c in line]))
+  try:
+    encoder = Encoder(args.font, quality=quality_map[args.quality])
+  except:
+    print("Failed to load font - stopping.")
+    sys.exit(1)
 
 
-# extract the glyph metrics and contours for all printable glyphs
-# ===========================================================================
 
-print("> extracting {} glyphs".format(len(character_codepoints)))
+  # determine glyph metric and coordinate scaling
+  # ===========================================================================
 
-glyphs = {}
-contours = {}
-printable_count = 0
-for codepoint in character_codepoints:
-  glyph = encoder.get_glyph(codepoint)
+  # the bounding box defines the largest bounding box of all glyphs
+  print("  - bounding box {}, {} -> {}, {}".format(
+    encoder.bbox_l, encoder.bbox_t, encoder.bbox_r, encoder.bbox_b))
 
-  if glyph:
-    print("  \\u{:04} {} : {:>2} contours / {:>3} points".format(
-      codepoint, 
-      "'" + chr(codepoint) + "'", 
-      len(glyph.contours), 
-      sum([len(c) for c in glyph.contours])
-    ))
-    printable_count += 1
-  else:
-    print("  \\u{:04} missing or not printable, skipping".format(codepoint))
-
-# write glyph dictionary to file
-print("> write output file in {} format".format(format))
-
-if len(encoder.glyphs) == 0:
-  print("No printable glyphs - stopping.")
-  sys.exit(1)
-
-# write header to file
-print("  - header")
-result = bytes()
-result += b"af!?"
-result += struct.pack(">H", len(encoder.glyphs))
-result += struct.pack(">H", 0) # no flags to set
-
-print("  - glyph dictionary")
-for codepoint, glyph in encoder.glyphs.items():
-  result += encoder.get_packed_glyph(glyph)
-
-print("  - glyph contours")
-for codepoint, glyph in encoder.glyphs.items():
-  result += encoder.get_packed_glyph_contours(glyph)
+  # then upscale from the normalised scale to our preferred scale
+  print("  - scale factor {}".format(round(encoder.scale_factor, 3)))
 
 
-# write out the resulting paf font file in requested format
-# ===========================================================================
+  # get the list of character code points or ascii character codes
+  # ===========================================================================
 
-with open(args.out, "wb") as outfile:
-  # Alright Fonts binary font file
-  if args.format == "af":
-    outfile.write(result)
+  # default to the standard ascii character set
+  if not args.characters and not args.corpus:
+    character_codepoints = [i for i in range(0, 128)]
 
-  # c(++) const array
-  if args.format == "c":
-    outfile.write(b"const unsigned char _font[] = {\n")
-    i = 0
-    while i < len(result):
-      line = result[i:i + 12]
-      outfile.write(b"  ")
-      for char in line:
-        outfile.write("0x{:02x}".format(char).encode("ascii"))
-        if i < len(result) - 1:
-          outfile.write(b", ")   
-        i += 1   
-      outfile.write(b"\n")
-    outfile.write(b"};\n")
+  # user supplied list of characters as command line argument
+  if args.characters:
+    character_codepoints = sorted([ord(c) for c in set(args.characters)])
 
-  # python array
-  if args.format == "python":
-    ooutfileut.write(b"_font = bytes([\n")
-    i = 0
-    while i < len(result):
-      line = result[i:i + 12]
-      outfile.write(b"  ")
-      for char in line:
-        outfile.write("0x{:02x}".format(char).encode("ascii"))
-        if i < len(result) - 1:
-          outfile.write(b", ")   
-        i += 1   
-      outfile.write(b"\n")
-    outfile.write(b"])\n")
-    pass
+  # user supplied corpus file to extract characters from
+  if args.corpus:
+    while True:
+      line = args.corpus.readline()
+      if not line:
+        break
+      character_codepoints = sorted(set(character_codepoints + [ord(c) for c in line]))
 
-print("> output file size {} bytes and contains {} characters (avg. {} bytes per character)".format(len(result), printable_count, int(len(result) / printable_count)))
+
+  # extract the glyph metrics and contours for all printable glyphs
+  # ===========================================================================
+
+  print("> extracting {} glyphs".format(len(character_codepoints)))
+
+  glyphs = {}
+  contours = {}
+  printable_count = 0
+  for codepoint in character_codepoints:
+    glyph = encoder.get_glyph(codepoint)
+
+    if glyph:
+      print("  \\u{:04} {} : {:>2} contours / {:>3} points".format(
+        codepoint,
+        "'" + chr(codepoint) + "'",
+        len(glyph.contours),
+        sum([len(c) for c in glyph.contours])
+      ))
+      printable_count += 1
+    else:
+      print("  \\u{:04} missing or not printable, skipping".format(codepoint))
+
+  # write glyph dictionary to file
+  print("> write output file in {} format".format(format))
+
+  if len(encoder.glyphs) == 0:
+    print("No printable glyphs - stopping.")
+    sys.exit(1)
+
+  # write header to file
+  print("  - header")
+  result = bytes()
+  result += b"af!?"
+  result += struct.pack(">H", len(encoder.glyphs))
+  result += struct.pack(">H", 0) # no flags to set
+
+  print("  - glyph dictionary")
+  for codepoint, glyph in encoder.glyphs.items():
+    result += encoder.get_packed_glyph(glyph)
+
+  print("  - glyph contours")
+  for codepoint, glyph in encoder.glyphs.items():
+    result += encoder.get_packed_glyph_contours(glyph)
+
+
+  # write out the resulting paf font file in requested format
+  # ===========================================================================
+
+  with open(args.out, "wb") as outfile:
+    # Alright Fonts binary font file
+    if args.format == "af":
+      outfile.write(result)
+
+    # c(++) const array
+    if args.format == "c":
+      outfile.write(b"const unsigned char _font[] = {\n")
+      i = 0
+      while i < len(result):
+        line = result[i:i + 12]
+        outfile.write(b"  ")
+        for char in line:
+          outfile.write("0x{:02x}".format(char).encode("ascii"))
+          if i < len(result) - 1:
+            outfile.write(b", ")
+          i += 1
+        outfile.write(b"\n")
+      outfile.write(b"};\n")
+
+    # python array
+    if args.format == "python":
+      ooutfileut.write(b"_font = bytes([\n")
+      i = 0
+      while i < len(result):
+        line = result[i:i + 12]
+        outfile.write(b"  ")
+        for char in line:
+          outfile.write("0x{:02x}".format(char).encode("ascii"))
+          if i < len(result) - 1:
+            outfile.write(b", ")
+          i += 1
+        outfile.write(b"\n")
+      outfile.write(b"])\n")
+      pass
+
+  print("> output file size {} bytes and contains {} characters (avg. {} bytes per character)".format(len(result), printable_count, int(len(result) / printable_count)))
+
+if __name__ == "__main__":
+  main()

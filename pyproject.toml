@@ -1,0 +1,42 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools>=61.0", "wheel>=0.37.1"]
+
+[project]
+name = "alright-fonts"
+version = "0.0.1"
+description = "Font format and tools for low-resource platforms"
+readme = "README.md"
+requires-python = ">=3.9,<4.0"
+license = {file = "LICENSE"}
+keywords = ["font", "microcontroller", "truetype", "opentype"]
+
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: Implementation :: CPython",
+]
+
+dependencies = [
+    "freetype-py", "pillow"
+]
+
+[tool.setuptools.packages.find]
+include = ["python_alright_fonts*", "afinate"]
+namespaces = false
+
+[project.scripts]
+# Command line interface entrypoint scripts
+afinate = "afinate:main"
+
+[project.urls]
+"Homepage" = "https://github.com/lowfatcode/alright-fonts"
+"Documentation" = "https://github.com/lowfatcode/alright-fonts/README.md"

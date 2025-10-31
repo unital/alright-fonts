@@ -1,21 +1,19 @@
 #!/usr/bin/env python3
 
 # renders a demo swatch using the font provided
-# 
+#
 # either pass the font file in with the `--font` argument or pipe the file to stdin
 #
 # for example:
 #
-#   ./examples/python/render-demo --font out/roboto-black.af
-#   ./afinate --font fonts/Roboto-Black.tff --quality medium - | examples/python/render-demo
+#   ./examples/python/swatch --font out/roboto-black.af
+#   ./afinate --font fonts/Roboto-Black.tff --quality medium - | examples/python/swatch
 
 
-# insert top level into python module search path so python_alright_fonts import works
-# what's the pythonic way to achieve this kind of structure of a repo with
-# a module and an isolated `examples` folder?
-import sys, os, argparse
-path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-sys.path.insert(1, path)
+import argparse
+import sys
+
+from PIL import Image, ImageDraw
 
 from python_alright_fonts import Glyph, Point, Face, load_font
 
@@ -33,9 +31,7 @@ else:
 face = load_font(data)
 glyph = face.get_glyph(ord("a"))
 
-from PIL import Image, ImageDraw
-
-def draw(glyph, position, scale, colour=(255, 255, 255)):    
+def draw(glyph, position, scale, colour=(255, 255, 255)):
   point_count = 0
   for contour in glyph.contours:
     for i in range(0, len(contour)):
@@ -51,23 +47,23 @@ def draw(glyph, position, scale, colour=(255, 255, 255)):
       f = int((i / len(contour)) * 255)
       #canvas.ellipse([p1[0] - 1, p1[1] - 1, p1[0] + 1, p1[1] + 1], fill=(f, 255 - f, 0, 255))
 
-image = Image.new("RGB", (1000, 1000)) 
+image = Image.new("RGB", (1000, 1000))
 canvas = ImageDraw.Draw(image, "RGBA")
 canvas.rectangle((0, 0, 1000, 1000), fill=(60, 70, 80, 255))
 
 message = """1234567890
 
-!\"$%^&*()_+-=[]`\{\};'#:@~,./<>?\|
+!\\"$%^&*()_+-=[]`{};'#:@~,./<>?|
 
 Prow scuttle parrel provost Sail ho
 shrouds spirits boom mizzenmast
-yardarm. Pinnace holystone 
-mizzenmast quarter crow's nest 
-nipperkin grog yardarm hempen 
+yardarm. Pinnace holystone
+mizzenmast quarter crow's nest
+nipperkin grog yardarm hempen
 halter furl.
 
-Swab barque interloper chantey 
-doubloon starboard grog black jack 
+Swab barque interloper chantey
+doubloon starboard grog black jack
 gangway rutters.
 """
 
@@ -80,7 +76,7 @@ scale = font_size / 128
 spacing = 1
 line_spacing = 1
 for character in message:
-  if character == "\n":    
+  if character == "\n":
     caret.x = left_margin
     caret.y += font_size * line_spacing
     continue
@@ -89,7 +85,7 @@ for character in message:
 
   if not glyph:
     continue
-  
+
   draw(glyph, caret, scale)
   caret.x += glyph.advance * scale * spacing
 
