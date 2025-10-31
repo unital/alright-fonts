@@ -30,12 +30,8 @@ dependencies = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["python_alright_fonts*", "afinate"]
+include = ["python_alright_fonts*"]
 namespaces = false
-
-[project.scripts]
-# Command line interface entrypoint scripts
-afinate = "afinate:main"
 
 [project.urls]
 "Homepage" = "https://github.com/lowfatcode/alright-fonts"
